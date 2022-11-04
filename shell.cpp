@@ -1,81 +1,221 @@
 #include <iostream>
 
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#include <sys/types.h>  // pid_t, etc
+#include <sys/wait.h>   // wait, waitpid
+#include <sys/ioctl.h>  // Get terminal size
+#include <unistd.h>     // pipe, fork, dup2, execvp, close
+#include <fcntl.h>
 
-#include <vector>
-#include <string>
+#include <readline/readline.h>  // rl_*()
+#include <readline/history.h>   // add_history()
 
-#include "Tokenizer.h"
-
-// all the basic colours for a shell prompt
-#define RED     "\033[1;31m"
-#define GREEN	"\033[1;32m"
-#define YELLOW  "\033[1;33m"
-#define BLUE	"\033[1;34m"
-#define WHITE	"\033[1;37m"
-#define NC      "\033[0m"
+#include "Shell.h"     // struct `Job`, namespace `Custom`, class `Shell`
 
 using namespace std;
 
-int main () {
-    for (;;) {
-        // need date/time, username, and absolute path to current dir
-        cout << YELLOW << "Shell$" << NC << " ";
-        
-        // get user inputted command
-        string input;
-        getline(cin, input);
+Shell* const aggieshell = new Shell{};
 
-        if (input == "exit") {  // print exit message and break out of infinite loop
-            cout << RED << "Now exiting shell..." << endl << "Goodbye" << NC << endl;
-            break;
-        }
+/* Handle SIGWINCH and window size changes when readline is not active and
+    reading a character. */
+static void sighandler (int) {
+    aggieshell->sigwinch_received = true;
+}
 
-        // get tokenized commands from user input
-        Tokenizer tknr(input);
-        if (tknr.hasError()) {  // continue to next prompt if input had an error
-            continue;
-        }
-
-        // // print out every command token-by-token on individual lines
-        // // prints to cerr to avoid influencing autograder
-        // for (auto cmd : tknr.commands) {
-        //     for (auto str : cmd->args) {
-        //         cerr << "|" << str << "| ";
-        //     }
-        //     if (cmd->hasInput()) {
-        //         cerr << "in< " << cmd->in_file << " ";
-        //     }
-        //     if (cmd->hasOutput()) {
-        //         cerr << "out> " << cmd->out_file << " ";
-        //     }
-        //     cerr << endl;
-        // }
-
-        // fork to create child
-        pid_t pid = fork();
-        if (pid < 0) {  // error check
-            perror("fork");
-            exit(2);
-        }
-
-        if (pid == 0) {  // if child, exec to run command
-            // run single commands with no arguments
-            char* args[] = {(char*) tknr.commands.at(0)->args.at(0).c_str(), nullptr};
-
-            if (execvp(args[0], args) < 0) {  // error check
-                perror("execvp");
-                exit(2);
+void exec_cmd ( Command* command, const int* fds, const bool isLast )
+{
+    if (!isLast || command->isSignExpansion()) {
+        dup2(fds[FD::WRITE], STDOUT_FILENO);
+    } else {
+        if (command->hasOutput()) {
+            int filefd = open((char*)command->out_file.c_str(), (O_CREAT | O_WRONLY | O_TRUNC), (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
+            if (filefd < 0) {
+                perror("output_file");
+                exit(errno);
             }
-        }
-        else {  // if parent, wait for child to finish
-            int status = 0;
-            waitpid(pid, &status, 0);
-            if (status > 1) {  // exit if child didn't exec properly
-                exit(status);
-            }
+            dup2(filefd, STDOUT_FILENO);    // Point the Shell's input to the input file
+            close(filefd);                  // Remove the fd entry from the fd table
         }
     }
+    close(fds[FD::WRITE]);                  // Remove the fd entry from the fd table
+    close(fds[FD::READ]);                   // Close the read end of the pipe on the child side.
+
+    int status = 0;
+    if (command->args.front() == "jobs") {
+        Custom::jobs();
+    } else if (command->args.front() == "cd") {
+        status = Custom::direc(command->args);
+    } else {
+        char** args = command->argsToCString();
+        status = execvp(args[0], args);
+        delete[] args;
+    }
+    if (status < 0) {
+        perror(NULL);       // "No such file or directory"
+        exit(errno);
+    }
+    exit(EXIT_SUCCESS);
+
+}
+
+void exec_line ( Tokenizer* line )
+{
+    if (line->commands.front()->hasInput()) {
+        int filefd = open((char*)line->commands.front()->in_file.c_str(), O_RDONLY);
+        if (filefd < 0) {
+            perror("input_file");
+            // exit(2);
+        }
+        dup2(filefd, STDIN_FILENO);     // Point the Shell's input to the input file
+        close(filefd);                  // Remove the fd entry from the fd table
+
+    }
+    pid_t childpid = -1;
+    int fds[2];
+    bool isLast;
+    for (Command*& command : line->commands)
+    {
+        pipe(fds); // Create pipe
+        switch (childpid = fork())
+        {
+        case -1:                // ERROR
+            perror("fork");
+            return; // exit(2);
+        case 0:                 // CHILD
+            isLast = (&command == &line->commands.back());
+            exec_cmd(command, fds, isLast);
+            exit(errno);
+            break;
+        default:                // PARENT
+            close(fds[FD::WRITE]);                // Close the write end of the pipe
+            dup2(fds[FD::READ], STDIN_FILENO);    // Point the Shell's input to the read end of the pipe.
+            close(fds[FD::READ]);                 // Remove the fd entry from the fd table
+        }
+    }
+    if (line->isBackground()) {
+        aggieshell->bgjobs->push_back(new Job{++aggieshell->numJobs, childpid, line->getInput() });
+        cout << "[" << aggieshell->bgjobs->back()->job_number << "] " << childpid << endl;
+        return;
+    } else {
+        int status = 0;
+        waitpid(childpid, &status, 0);         // Reap child process
+        // if (status > 1) exit(status);       // exit if child didn't exec properly
+        return;
+    }
+}
+
+void parse_line ( char* input )
+{
+    Tokenizer line{string{input}};  // get tokenized commands from user input
+    if (line.hasError()) return;    // continue to next prompt if input had an error
+
+    if (line.hasExpansion()) {
+        vector<string*> se_results;
+        for (auto it = line.inner_sign_expansions.begin(); it != line.inner_sign_expansions.end(); ++it) {
+            Tokenizer curr{*it, &line, &se_results};
+            if (curr.hasError()) return;
+            exec_line(&curr);
+            se_results.push_back(aggieshell->get_expansion_result());
+        }
+        line.signExpand(&se_results);
+        for (string*& se : se_results) {
+            delete se;
+        }
+    }
+
+    exec_line(&line);
+}
+
+/* Callback function called for each line when accept-line executed, EOF
+    seen, or EOF character read.   This sets a flag and returns; it could
+    also call exit(3). */
+static void cb_linehandler (char *line)
+{
+    /* Can use ^D (stty eof) or "exit" to exit. */
+    if (line == NULL || strcmp(line, "exit") == 0) {
+        if (!aggieshell->redirect) {
+            if (line == 0) cout << "\n";
+            cout << RED << "Now exiting shell..." << endl << "Goodbye" << NC << endl;
+            if(line) free(line);
+            rl_callback_handler_remove();           // Reset the terminal settings from `shell_default`
+        }
+
+        
+        aggieshell->running = false;
+    }
+    else {
+        if (*line) parse_line(line);
+        
+        dup2(aggieshell->stdin_copy, STDIN_FILENO);
+        dup2(aggieshell->stdout_copy, STDOUT_FILENO);
+        if (!aggieshell->redirect) {
+            if (*line) add_history(line);
+            free(line);
+            rl_callback_handler_install(aggieshell->prompt(), cb_linehandler);
+        }
+        if (aggieshell->bgjobs->empty()) aggieshell->numJobs = 0;
+        Custom::jobs(false);
+    }
+}
+
+/* Skeleton version of the shell -- reads a line and executes it until EOF */
+void shell_redirected ()
+{
+    string str;
+    while (aggieshell->running && getline(cin, str))
+    {
+        cb_linehandler(&str[0]);
+    }
+}
+
+/* Fancy features like `tab` autocompletion and arrow-key history for a better user experience */
+void shell_default () 
+{
+    fd_set fds;
+    int r;
+
+    setlocale(LC_ALL, "");              // Set default locale values based on user preference ("")
+    signal(SIGWINCH, sighandler);       // Install handler for SIGWINCH
+    rl_callback_handler_install(aggieshell->prompt(), cb_linehandler);  // Install the line handler.
+
+    /* Enter a simple event loop.   This waits until something is available
+    to read on readline's input stream (defaults to standard input) and
+    calls the builtin character read callback to read it.    It does not
+    have to modify the user's terminal settings. */   
+    while (aggieshell->running)
+    {
+        FD_ZERO(&fds);
+        FD_SET(fileno(rl_instream), &fds);              
+
+        r = select(FD_SETSIZE, &fds, NULL, NULL, NULL);
+        if (r < 0 && errno != EINTR) {
+            perror("rltest: select");
+            rl_callback_handler_remove();
+            break;
+        }
+        if (aggieshell->sigwinch_received) {
+            rl_resize_terminal();
+            aggieshell->sigwinch_received = 0;
+        }
+        if (r < 0) continue;            
+
+        if (FD_ISSET(fileno(rl_instream), &fds)) rl_callback_read_char();
+    }
+}
+
+int main ()
+{
+    struct winsize in_w;
+    ioctl(STDIN_FILENO, TIOCGWINSZ, &in_w);         // Get the dimensions of stdin
+    aggieshell->redirect = (in_w.ws_col == 0);      // Test if input (stdin) has been redirected
+    switch (aggieshell->redirect)                   // We don't need fancy features if input is redirected
+    {
+        case false:
+            shell_default();
+            break;
+        case true:
+            shell_redirected();
+            break;
+    }
+    delete aggieshell;
+    return 0;
 }

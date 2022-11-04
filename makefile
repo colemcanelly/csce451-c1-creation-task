@@ -1,10 +1,10 @@
 CXX=g++
 CXXFLAGS=-std=c++17 -g -pedantic -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer
-LDLIBS=
+LDLIBS=-lreadline
 
 
 SRCS=shell.cpp
-DEPS=Command.cpp Tokenizer.cpp
+DEPS=Command.cpp Tokenizer.cpp Custom.cpp
 BINS=$(SRCS:%.cpp=%.exe)
 OBJS=$(DEPS:%.cpp=%.o)
 
@@ -25,4 +25,7 @@ clean:
 
 test: all
 	chmod u+x pa2-tests.sh
-	./pa2-tests.sh
+	./pa2-tests.sh $(filter-out $@,$(MAKECMDGOALS))
+
+%:		# Do nothing if an arg is not a `Make Goal`
+	@:

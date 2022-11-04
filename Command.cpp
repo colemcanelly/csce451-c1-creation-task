@@ -2,7 +2,9 @@
 
 using namespace std;
 
-Command::Command (const string _cmd, vector<string> _inner_strings) {
+Command::Command (const string _cmd, vector<string> _inner_strings)
+    : is_expansion(false)
+{
     cmd = trim(_cmd);
     bg = (cmd.substr(cmd.size()-1) == "&");
     in_file = "";
@@ -10,6 +12,18 @@ Command::Command (const string _cmd, vector<string> _inner_strings) {
     findInOut();
     inner_strings = _inner_strings;
     parseArgs();
+}
+
+Command::Command (const std::string _cmd, std::vector<std::string> _inner_strings, bool __is_exp)
+    : is_expansion(__is_exp) 
+{
+    cmd = trim(_cmd);
+    bg = (cmd.substr(cmd.size()-1) == "&");
+    in_file = "";
+    out_file = "";
+    findInOut();
+    inner_strings = _inner_strings;
+    parseArgs();    
 }
 
 bool Command::hasInput () {
@@ -22,6 +36,15 @@ bool Command::hasOutput () {
 
 bool Command::isBackground () {
     return bg;
+}
+
+char** Command::argsToCString() {
+    char** __arg_c_str = new char*[args.size() + 1];
+    for (size_t i = 0; i < args.size(); ++i) {
+        __arg_c_str[i] = (char*)args.at(i).c_str();
+    }
+    __arg_c_str[args.size()] = nullptr;
+    return __arg_c_str;
 }
 
 string Command::trim (const string in) {
@@ -55,6 +78,24 @@ void Command::findInOut () {
         
         out_file = trim(cmd.substr(out_start+1, out_end-out_start-1));
         cmd = trim(cmd.substr(0, out_start) + cmd.substr(out_end));
+    }
+}
+
+void Command::signExpand(std::vector<std::string*>* _se_results) {
+    for (string& arg : args) {
+        while (arg.find("--tkn") != string::npos) {
+            size_t start = arg.find("--tkn");
+            size_t end = arg.find("nkt--", start);
+            size_t index = stoi(arg.substr(start + 5, end - start - 5));
+            
+            string str_beg = arg.substr(0, start);
+            string str_mid = *(_se_results->at(index));
+            while (str_mid.find('\n') != string::npos) {
+                str_mid.erase(str_mid.find('\n'));
+            }
+            string str_end = arg.substr(end + 5);
+            arg = str_beg + str_mid + str_end;
+        }
     }
 }
 

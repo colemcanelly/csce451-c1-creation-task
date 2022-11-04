@@ -4,6 +4,9 @@
 #include <vector>
 #include <string>
 
+#include "/home/colemcanelly/c_tools/macros.hpp"
+
+
 /*
  * class that stores information about a command
  * 
@@ -23,6 +26,7 @@ private:
 
     // whether or not the command should be run in the background
     bool bg;
+    bool is_expansion;
 
 public:
     // filename of redirected input file, if it exists
@@ -35,6 +39,7 @@ public:
     // constructor - takes command and calls internal convenience
     //               functions to parse the arguments
     Command (const std::string _cmd, std::vector<std::string> _inner_strings);
+    Command (const std::string _cmd, std::vector<std::string> _inner_strings, bool _is_sign_exp);
 
     // destructor
     ~Command () {}
@@ -44,6 +49,16 @@ public:
     bool hasInput ();
     bool hasOutput ();
     bool isBackground ();
+
+    /* If a command should create a sign expansion result
+        by writing its output to a pipe to be read by a sign expansion */
+    bool isSignExpansion() { return is_expansion; };
+
+    /* Updates a command with the result of its requested sign expansion */
+    void signExpand(std::vector<std::string*>* _se_results);
+
+    // Returns the arguments in an array of c strings
+    char** argsToCString();
 
 private:
     // convenience functions to trim whitespace, find input/output filename,

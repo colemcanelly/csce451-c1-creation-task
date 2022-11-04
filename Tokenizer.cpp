@@ -3,10 +3,21 @@
 
 using namespace std;
 
-Tokenizer::Tokenizer (const string _input) {
-    error = false;
+Tokenizer::Tokenizer (const string _input)
+    : error(false), is_expansion(false), has_expansion(false)
+{
     input = trim(_input);
     split("|");
+    bg_proc = (_input.back() == char('&'));
+}
+
+Tokenizer::Tokenizer (const string _input, Tokenizer* parentTokn, std::vector<std::string*>* se_results)
+    : error(false), is_expansion(true), has_expansion(false)
+{
+    inner_strings = parentTokn->inner_strings;
+    input = trim(_input);
+    split("|", se_results);
+    bg_proc = (_input.back() == char('&'));
 }
 
 Tokenizer::~Tokenizer () {
@@ -30,10 +41,47 @@ string Tokenizer::trim (const string in) {
     return in;
 }
 
-void Tokenizer::split (const string delim) {
+void Tokenizer::signExpand (std::vector<std::string*>* se_results)
+{
+    for (Command*& cmd : commands) {
+        cmd->signExpand(se_results);
+    }
+}
+
+/* Remove the sign expansions and place them into
+    an external vector for later processing     */
+void Tokenizer::remove_se ( std::string& line )
+{
+    size_t index = 0;
+    while (line.find("$(") != string::npos) 
+    {
+        size_t start = 0;
+        size_t end = 0;
+        if (line.find(")") != string::npos) {
+            start = line.rfind("$(");
+            end = line.find(")", start + 1);
+            if (end == string::npos) {
+                error = true;
+                cerr << "Invalid command - No closing parenthesis on `$(`" << endl;
+                return;
+            }
+        }
+
+        inner_sign_expansions.push_back(line.substr(start + 2, end - start - 2));
+
+        string str_beg = line.substr(0, start);
+        string str_mid = "--tkn" + to_string(index) + "nkt--";
+        string str_end = line.substr(end + 1);
+        line = str_beg + str_mid + str_end;
+        has_expansion = true;
+
+        ++index;
+    }
+}
+
+void Tokenizer::split (const string delim, vector<string*>* se_results) {
     string temp = input;
     
-    vector<string> inner_strings;
     int index = 0;
     while (temp.find("\"") != string::npos || temp.find("\'") != string::npos) {
         int start = 0;
@@ -64,14 +112,26 @@ void Tokenizer::split (const string delim) {
         string str_mid = "--str " + to_string(index);
         string str_end = temp.substr(end+1);
         temp = str_beg + str_mid + str_end;
-        
+
         index++;
     }
 
+    remove_se(temp);
+    // INFO(temp);
+
 	size_t i = 0;
 	while ((i = temp.find(delim)) != string::npos) {
-		commands.push_back(new Command(trim(temp.substr(0, i)), inner_strings));
-		temp = trim(temp.substr(i+1));
+        string cur = trim(temp.substr(0, i));
+		commands.push_back(new Command(cur, inner_strings, is_expansion));
+        if (cur.find("--tkn") != string::npos) {
+            if (se_results && se_results->size()) commands.back()->signExpand(se_results);
+            has_expansion = true;
+        }
+		temp = trim(temp.substr(i + 1));
 	}
-	commands.push_back(new Command(trim(temp), inner_strings));
+	commands.push_back(new Command(trim(temp), inner_strings, is_expansion));
+    if (temp.find("--tkn") != string::npos) {
+            if (se_results && se_results->size()) commands.back()->signExpand(se_results);
+            has_expansion = true;
+        }
 }
