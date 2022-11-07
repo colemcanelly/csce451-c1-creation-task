@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include <list>
-#include <unistd.h>     // pipe, fork, dup2, execvp, close
+#include <unistd.h>     // pipe, fork, dup2, execvp, close, chdir
 #include <sys/wait.h>   // wait, waitpid
 
 #include <cstring>
@@ -50,12 +50,13 @@ public:
     bool running, redirect;
     size_t numJobs;
     std::list<Job*>* bgjobs;
-    std::string prev_dir;
+    std::string prev_dir, home_dir;
 
     Shell() {
         running = true;
         redirect = false;
         prev_dir = "";
+        home_dir = getenv("HOME");
         numJobs = 0;
         sigwinch_received = 0;
         bgjobs = new std::list<Job*>{};
@@ -63,9 +64,10 @@ public:
 
     ~Shell() {
         signal(SIGQUIT, SIG_IGN);       // Immunity from the genocide that is about to unfold
-        kill(0, SIGQUIT);               // Genocide all my children
+        // kill(0, SIGQUIT);               // Genocide all my children
         for (auto it = bgjobs->begin(); it != bgjobs->end();)       // Systematically reaping my children
-        { 
+        {
+            kill((*it)->pid, SIGQUIT); 
             waitpid((*it)->pid, NULL, 0);
             delete *it;
             it = bgjobs->erase(it);
@@ -101,11 +103,13 @@ public:
         std::string* p_result = new std::string{""};
         char buffer[count + 1];
         do {
-            memset(buffer, 0, count);
+            memset(buffer, '\0', count + 1);
             n_bytes = read(STDIN_FILENO, buffer, count);
-            buffer[count] = '\0';
-            p_result->append(buffer);
-        } while ((n_bytes != 0) && (n_bytes == count));
+            p_result->append(buffer, n_bytes);
+            while (p_result->find('\n') != std::string::npos) {
+                p_result->erase(p_result->find('\n'));
+            }
+        } while ((n_bytes > 0) && (n_bytes == count));
         if (n_bytes < 0) {
             perror("pipe_read");
             delete p_result;

@@ -8,6 +8,7 @@ int Custom::direc ( std::vector<std::string> args )
         if (aggieshell->prev_dir != "") status = chdir((char*)aggieshell->prev_dir.c_str());
     }
     else {
+        if (args.back().front() == char('~')) args.back().replace(0, 1, aggieshell->home_dir);
         status = chdir((char*)args.back().c_str());
     }
     aggieshell->prev_dir.assign(tmp);
@@ -15,7 +16,7 @@ int Custom::direc ( std::vector<std::string> args )
     if (status < 0) {
         return status;
     }
-    exit(EXIT_SUCCESS);
+    return 0;
 }
 
 void Custom::jobs (bool __showrunning)

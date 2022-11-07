@@ -42,8 +42,6 @@ void exec_cmd ( Command* command, const int* fds, const bool isLast )
     int status = 0;
     if (command->args.front() == "jobs") {
         Custom::jobs();
-    } else if (command->args.front() == "cd") {
-        status = Custom::direc(command->args);
     } else {
         char** args = command->argsToCString();
         status = execvp(args[0], args);
@@ -74,6 +72,11 @@ void exec_line ( Tokenizer* line )
     bool isLast;
     for (Command*& command : line->commands)
     {
+        if (command->args.front() == "cd") {
+            if (Custom::direc(command->args) < 0) perror("cd");
+            continue;
+        }
+
         pipe(fds); // Create pipe
         switch (childpid = fork())
         {
@@ -134,12 +137,11 @@ static void cb_linehandler (char *line)
     if (line == NULL || strcmp(line, "exit") == 0) {
         if (!aggieshell->redirect) {
             if (line == 0) cout << "\n";
-            cout << RED << "Now exiting shell..." << endl << "Goodbye" << NC << endl;
             if(line) free(line);
             rl_callback_handler_remove();           // Reset the terminal settings from `shell_default`
         }
 
-        
+        cout << RED << "Now exiting shell..." << endl << "Goodbye" << NC << endl;
         aggieshell->running = false;
     }
     else {
@@ -161,8 +163,10 @@ static void cb_linehandler (char *line)
 void shell_redirected ()
 {
     string str;
+    // cout << aggieshell->prompt();
     while (aggieshell->running && getline(cin, str))
     {
+        cout << aggieshell->prompt() << str << endl;
         cb_linehandler(&str[0]);
     }
 }

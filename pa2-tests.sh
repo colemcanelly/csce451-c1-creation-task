@@ -197,29 +197,16 @@ test_pipes_io() {
     local PTS=12
     MAX=$(($MAX+$PTS))
     remake
-    # printf "\n\t\tTesting :: Multiple Pipes & Redirection\r"
+    printf "\n\t\tTesting :: Multiple Pipes & Redirection\r"
     cat ./test-files/test_multiple_pipes_redirection.txt ./test-files/test_exit.txt > ./test-files/cmd.txt
     RES=$(. ./test-files/test_multiple_pipes_redirection.txt)
     echo "${RES}" >cnt.txt
-    printf "${RES}\n\n"
     CNT=$(grep -oF -- "${RES}" cnt.txt | wc -l)
-    printf "${CNT}\n\n"
     rm -f cnt.txt test.txt output.txt
-    ASH=$(./shell < ./test-files/cmd.txt 2>/dev/null)
-    echo "${ASH}"
-    ACNT=$(grep -oF -- "${ASH}" | wc -l)
-    printf "${ACNT}\n\n"
-    printf "ran grep\n"
-    if [ ${ACNT} -eq ${CNT} ] && [ -f test.txt ] && [ -f output.txt ]; then 
-        # if [ -f test.txt ] ; then
-        #     if [ -f output.txt ] ; then
+    if [ $(./shell < ./test-files/cmd.txt 2>/dev/null | grep -oF -- "${RES}" | wc -l) -eq ${CNT} ] && [ -f test.txt ] && [ -f output.txt ]; then 
         printf "    ${GREEN}Passed${NC}\n"
         SCORE=$(($SCORE+$PTS))
         all_failed=false
-            # fi
-            # printf "    ${RED}Failed \n\"${NC}output.txt${RED}\"${NC}\n"
-        # fi
-        # printf "    ${RED}Failed \n\"${NC}test.txt${RED}\"${NC}\n"
     else
         printf "    ${RED}Failed${NC}\n"
         all_passed=false
@@ -467,7 +454,13 @@ else
 fi
 
 if [ "$DEBUG" = false ] ; then
-    printf "${NOUNDERLINE}${NOINVERT}\t${SCORE}${NC}/${MAX}"
+    printf "${NOUNDERLINE}${NOINVERT}\t"
+    if [ ${SCORE} -eq ${MAX} ]; then
+        printf "${NC}${SCORE}"
+    else
+        printf "${SCORE}"
+    fi
+    printf "${NC}/${MAX}"
 fi
 
 printf "${NC}\n\n\n"
