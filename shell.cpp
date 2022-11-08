@@ -12,6 +12,7 @@
 // #define READLINE_LIBRARY
 #include "readline/readline.h"
 #include "readline/history.h"   // add_history()
+// #include "./include/readline/readline.h"
 
 #include "Shell.h"     // struct `Job`, namespace `Custom`, class `Shell`
 
