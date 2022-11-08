@@ -22,7 +22,7 @@ jobs:
           mkdir .github/classroom/
           cp tests/graders/grading2.json .github/classroom/autograding.json
           cp tests/collateral/pa2-tests/* test-files/
-          cp tests/makefiles/makefile2 makefile
           make
+          cp tests/makefiles/makefile2 makefile
       - name: Run Autograder
         uses: education/autograding@v1
