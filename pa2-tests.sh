@@ -269,6 +269,7 @@ test_se_single() {
         printf "    ${RED}Failed${NC}\n"
         all_passed=false
     fi
+    rm -f cnt.txt
 }
 
 test_se_multiple() {
@@ -288,6 +289,7 @@ test_se_multiple() {
         printf "    ${RED}Failed${NC}\n"
         all_passed=false
     fi
+    rm -f cnt.txt
 }
 
 test_se_nested() {
@@ -307,6 +309,7 @@ test_se_nested() {
         printf "    ${RED}Failed${NC}\n"
         all_passed=false
     fi
+    rm -f cnt.txt
 }
 
 test_ls() {
@@ -353,88 +356,6 @@ test_all() {
     test_se                 # Group Test
 }
 
-dbg_ps() {
-    remake
-    printf "\n\t\tTesting :: ps\r"
-    FILE="./ps.txt"
-    RES=$(. ${FILE})
-    if ./shell <$FILE 2>/dev/null | grep -qF -- "${RES}"; then
-        printf "    ${GREEN}Passed${NC}\n"
-        all_failed=false
-    else
-        printf "    ${RED}Failed${NC}\n"
-        all_passed=false
-    fi
-}
-
-dbg_ps_awk() {
-    remake
-    printf "\n\t\tTesting :: ps_awk\r"
-    FILE="./ps_awk.txt"
-    RES=$(. ${FILE})
-    if ./shell <$FILE 2>/dev/null | grep -qF -- "${RES}"; then
-        printf "    ${GREEN}Passed${NC}\n"
-        all_failed=false
-    else
-        printf "    ${RED}Failed${NC}\n"
-        all_passed=false
-    fi
-}
-
-dbg_ps_awk_head() {
-    remake
-    printf "\n\t\tTesting :: ps_awk_head\r"
-    FILE="./ps_awk_head.txt"
-    RES=$(. ${FILE})
-    if ./shell <$FILE 2>/dev/null | grep -qF -- "${RES}"; then
-        printf "    ${GREEN}Passed${NC}\n"
-        all_failed=false
-    else
-        printf "    ${RED}Failed${NC}\n"
-        all_passed=false
-    fi
-}
-
-dbg_ps_awk_head_tr() {
-    remake
-    printf "\n\t\tTesting :: ps_awk_head_tr\r"
-    FILE="./ps_awk_head_tr.txt"
-    RES=$(. ${FILE})
-    if ./shell <$FILE 2>/dev/null | grep -qF -- "${RES}"; then
-        printf "    ${GREEN}Passed${NC}\n"
-        all_failed=false
-    else
-        printf "    ${RED}Failed${NC}\n"
-        all_passed=false
-    fi
-}
-
-dbg_ps_awk_head_tr_sort() {
-    remake
-    printf "\n\t\tTesting :: ps_awk_head_tr_sort\r"
-    FILE="./ps_awk_head_tr_sort.txt"
-    RES=$(. ${FILE})
-    if ./shell <$FILE 2>/dev/null | grep -qF -- "${RES}"; then
-        printf "    ${GREEN}Passed${NC}\n"
-        all_failed=false
-    else
-        printf "    ${RED}Failed${NC}\n"
-        all_passed=false
-    fi
-}
-
-DEBUG=false
-test_dbg() {
-    DEBUG=true
-    dbg_ps
-    dbg_ps_awk
-    dbg_ps_awk_head
-    dbg_ps_awk_head_tr
-    dbg_ps_awk_head_tr_sort
-    test_pipes_io
-}
-
-
 if [ $# -eq 0 ]; then
     test_all
 else
@@ -453,15 +374,13 @@ else
     printf "${RED}${BOLD}${UNDERLINE}Some tests Failed"
 fi
 
-if [ "$DEBUG" = false ] ; then
-    printf "${NOUNDERLINE}${NOINVERT}\t"
-    if [ ${SCORE} -eq ${MAX} ]; then
-        printf "${NC}${SCORE}"
-    else
-        printf "${SCORE}"
-    fi
-    printf "${NC}/${MAX}"
+printf "${NOUNDERLINE}${NOINVERT}\t"
+if [ ${SCORE} -eq ${MAX} ]; then
+    printf "${NC}${SCORE}"
+else
+    printf "${SCORE}"
 fi
+printf "${NC}/${MAX}"
 
 printf "${NC}\n\n\n"
 

@@ -1,1 +1,0 @@
-ps aux | awk '{print $1$11}' | head -10
