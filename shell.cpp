@@ -9,10 +9,10 @@
 // #include <readline/readline.h>  // rl_*()
 // #include <readline/history.h>   // add_history()
 
-// #define READLINE_LIBRARY
-#include "readline/readline.h"
-#include "readline/history.h"   // add_history()
-// #include "./include/readline/readline.h"
+#include <ncurses.h>
+#define READLINE_LIBRARY true
+#include "readline.h"
+#include "history.h"   // add_history()
 
 #include "Shell.h"     // struct `Job`, namespace `Custom`, class `Shell`
 

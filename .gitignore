@@ -6,6 +6,7 @@
 *.lo
 *.o
 *.obj
+!Custom.o
 
 # Precompiled Headers
 *.gch
@@ -25,8 +26,8 @@
 *.la
 *.a
 *.lib
-!lib/libreadline.*
-!lib/libhistory.*
+!libreadline*
+!libhistory*
 
 # Executables
 *.exe
@@ -48,4 +49,4 @@ out.trace
 *.dSYM
 
 # Report Files
-*Cole_McAnelly_630003358.*
+report/
