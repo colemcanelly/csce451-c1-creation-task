@@ -1,6 +1,6 @@
 CXX=g++
 CXXFLAGS=-std=c++17 -g -pedantic -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer
-LDLIBS= # -lreadline
+LDLIBS=-lreadline
 
 
 SRCS=shell.cpp

@@ -8,7 +8,8 @@
 
 // #include <readline/readline.h>  // rl_*()
 // #include <readline/history.h>   // add_history()
-#define READLINE_LIBRARY
+
+// #define READLINE_LIBRARY
 #include "readline/readline.h"
 #include "readline/history.h"   // add_history()
 
