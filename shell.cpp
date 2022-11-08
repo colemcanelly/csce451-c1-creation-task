@@ -9,7 +9,7 @@
 // #include <readline/readline.h>  // rl_*()
 // #include <readline/history.h>   // add_history()
 
-#include <ncurses.h>
+#include <termcap.h>
 #define READLINE_LIBRARY true
 #include "readline.h"
 #include "history.h"   // add_history()
