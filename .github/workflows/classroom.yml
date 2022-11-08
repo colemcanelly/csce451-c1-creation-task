@@ -23,5 +23,6 @@ jobs:
           cp tests/graders/grading2.json .github/classroom/autograding.json
           cp tests/collateral/pa2-tests/* test-files/
           cp tests/makefiles/makefile2 makefile
+          make
       - name: Run Autograder
         uses: education/autograding@v1
