@@ -9,8 +9,8 @@
 // #include <readline/readline.h>  // rl_*()
 // #include <readline/history.h>   // add_history()
 
-#include "readline-8.2/readline.h"
-#include "readline-8.2/history.h"   // add_history()
+#include "readline/readline.h"
+#include "readline/history.h"   // add_history()
 
 #include "Shell.h"     // struct `Job`, namespace `Custom`, class `Shell`
 
