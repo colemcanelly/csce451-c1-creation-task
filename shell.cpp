@@ -9,7 +9,7 @@
 // #include <readline/readline.h>  // rl_*()
 // #include <readline/history.h>   // add_history()
 
-#include <termcap.h>
+// #include <ncurses.h>
 #define READLINE_LIBRARY true
 #include "readline.h"
 #include "history.h"   // add_history()
@@ -136,7 +136,7 @@ void parse_line ( char* input )
 /* Callback function called for each line when accept-line executed, EOF
     seen, or EOF character read.   This sets a flag and returns; it could
     also call exit(3). */
-static void cb_linehandler (char *line)
+static void handle_input (char *line)
 {
     /* Can use ^D (stty eof) or "exit" to exit. */
     if (line == NULL || strcmp(line, "exit") == 0) {
@@ -157,7 +157,7 @@ static void cb_linehandler (char *line)
         if (!aggieshell->redirect) {
             if (*line) add_history(line);
             free(line);
-            rl_callback_handler_install(aggieshell->prompt(), cb_linehandler);
+            rl_callback_handler_install(aggieshell->prompt(), handle_input);
         }
         if (aggieshell->bgjobs->empty()) aggieshell->numJobs = 0;
         Custom::jobs(false);
@@ -172,7 +172,7 @@ void shell_redirected ()
     while (aggieshell->running && getline(cin, str))
     {
         cout << aggieshell->prompt() << str << endl;
-        cb_linehandler(&str[0]);
+        handle_input(&str[0]);
     }
 }
 
@@ -184,12 +184,12 @@ void shell_default ()
 
     setlocale(LC_ALL, "");              // Set default locale values based on user preference ("")
     signal(SIGWINCH, sighandler);       // Install handler for SIGWINCH
-    rl_callback_handler_install(aggieshell->prompt(), cb_linehandler);  // Install the line handler.
+    rl_callback_handler_install(aggieshell->prompt(), handle_input);  // Install the line handler.
 
     /* Enter a simple event loop.   This waits until something is available
     to read on readline's input stream (defaults to standard input) and
     calls the builtin character read callback to read it.    It does not
-    have to modify the user's terminal settings. */   
+    have to modify the user's terminal settings. */  
     while (aggieshell->running)
     {
         FD_ZERO(&fds);
@@ -209,6 +209,12 @@ void shell_default ()
 
         if (FD_ISSET(fileno(rl_instream), &fds)) rl_callback_read_char();
     }
+    // char* input;
+    // while (aggieshell->running)
+    // {
+    //     input = readline(aggieshell->prompt());
+    //     handle_input(input);
+    // }
 }
 
 int main ()
