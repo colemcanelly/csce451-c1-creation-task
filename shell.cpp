@@ -25,9 +25,11 @@ Shell* const aggieshell = new Shell{};
 
 /* Handle SIGWINCH and window size changes when readline is not active and
     reading a character. */
+/*
 static void sighandler (int) {
     aggieshell->sigwinch_received = true;
 }
+*/
 
 void exec_cmd ( Command* command, const int* fds, const bool isLast )
 {
@@ -175,12 +177,14 @@ static void handle_input (char *line)
 void shell_redirected ()
 {
     string str;
-    // cout << aggieshell->prompt();
-    while (aggieshell->running && getline(cin, str))
-    {
-        cout << aggieshell->prompt() << str << endl;
+    bool status = true;
+    do {
+        cout << aggieshell->prompt();
+        if (!getline(cin, str)) status = false;
+        // if (aggieshell->redirect) cout << str << endl;
         handle_input(&str[0]);
-    }
+
+    } while (aggieshell->running && status);
 }
 
 /* This was for the tab completion and history extra credit
@@ -225,15 +229,18 @@ int main ()
     struct winsize in_w;
     ioctl(STDIN_FILENO, TIOCGWINSZ, &in_w);         // Get the dimensions of stdin
     aggieshell->redirect = (in_w.ws_col == 0);      // Test if input (stdin) has been redirected
+    shell_redirected();
+    /*
     switch (aggieshell->redirect)                   // We don't need fancy features if input is redirected
     {
         case false:
-            // shell_default();
+            shell_default();
             break;
         case true:
             shell_redirected();
             break;
     }
+    */
     delete aggieshell;
     return 0;
 }
