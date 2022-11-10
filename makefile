@@ -1,6 +1,6 @@
 CXX=g++
-CXXFLAGS=-std=c++17 -g -pedantic -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer
-LDLIBS=-lncurses -I./readline -L ./lib -lreadline -lhistory
+CXXFLAGS=-std=c++17 -g -H -pedantic -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer
+LDLIBS= # -I./include -L ./lib -l:libncurses.a -lreadline -lhistory 
 
 
 SRCS=shell.cpp

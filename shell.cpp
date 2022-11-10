@@ -9,10 +9,13 @@
 // #include <readline/readline.h>  // rl_*()
 // #include <readline/history.h>   // add_history()
 
-// #include <ncurses.h>
+/* This was for the tab completion and history extra credit
+    It does not compile on the remote GitHub tester >:/
+#include "ncurses/ncurses.h"
 #define READLINE_LIBRARY true
-#include "readline.h"
-#include "history.h"   // add_history()
+#include "readline/readline.h"
+#include "readline/history.h"   // add_history()
+*/
 
 #include "Shell.h"     // struct `Job`, namespace `Custom`, class `Shell`
 
@@ -140,11 +143,13 @@ static void handle_input (char *line)
 {
     /* Can use ^D (stty eof) or "exit" to exit. */
     if (line == NULL || strcmp(line, "exit") == 0) {
+        /* This was for the tab completion and history extra credit
         if (!aggieshell->redirect) {
             if (line == 0) cout << "\n";
             if(line) free(line);
             rl_callback_handler_remove();           // Reset the terminal settings from `shell_default`
         }
+        */
 
         cout << RED << "Now exiting shell..." << endl << "Goodbye" << NC << endl;
         aggieshell->running = false;
@@ -154,11 +159,13 @@ static void handle_input (char *line)
         
         dup2(aggieshell->stdin_copy, STDIN_FILENO);
         dup2(aggieshell->stdout_copy, STDOUT_FILENO);
+        /* This was for the tab completion and history extra credit
         if (!aggieshell->redirect) {
             if (*line) add_history(line);
             free(line);
             rl_callback_handler_install(aggieshell->prompt(), handle_input);
         }
+        */
         if (aggieshell->bgjobs->empty()) aggieshell->numJobs = 0;
         Custom::jobs(false);
     }
@@ -176,7 +183,8 @@ void shell_redirected ()
     }
 }
 
-/* Fancy features like `tab` autocompletion and arrow-key history for a better user experience */
+/* This was for the tab completion and history extra credit
+// Fancy features like `tab` autocompletion and arrow-key history for a better user experience
 void shell_default () 
 {
     fd_set fds;
@@ -186,10 +194,10 @@ void shell_default ()
     signal(SIGWINCH, sighandler);       // Install handler for SIGWINCH
     rl_callback_handler_install(aggieshell->prompt(), handle_input);  // Install the line handler.
 
-    /* Enter a simple event loop.   This waits until something is available
-    to read on readline's input stream (defaults to standard input) and
-    calls the builtin character read callback to read it.    It does not
-    have to modify the user's terminal settings. */  
+    // Enter a simple event loop.   This waits until something is available
+    //  to read on readline's input stream (defaults to standard input) and
+    //  calls the builtin character read callback to read it.    It does not
+    //  have to modify the user's terminal settings. 
     while (aggieshell->running)
     {
         FD_ZERO(&fds);
@@ -209,13 +217,8 @@ void shell_default ()
 
         if (FD_ISSET(fileno(rl_instream), &fds)) rl_callback_read_char();
     }
-    // char* input;
-    // while (aggieshell->running)
-    // {
-    //     input = readline(aggieshell->prompt());
-    //     handle_input(input);
-    // }
 }
+*/
 
 int main ()
 {
@@ -225,7 +228,7 @@ int main ()
     switch (aggieshell->redirect)                   // We don't need fancy features if input is redirected
     {
         case false:
-            shell_default();
+            // shell_default();
             break;
         case true:
             shell_redirected();

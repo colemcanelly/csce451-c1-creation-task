@@ -26,8 +26,9 @@
 *.la
 *.a
 *.lib
-!libreadline*
-!libhistory*
+# Static libraries for extra credit
+# !libreadline*
+# !libhistory*
 
 # Executables
 *.exe
