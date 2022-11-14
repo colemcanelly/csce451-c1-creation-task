@@ -145,6 +145,7 @@ static void handle_input (char *line)
 {
     /* Can use ^D (stty eof) or "exit" to exit. */
     if (line == NULL || strcmp(line, "exit") == 0) {
+        if (line == 0) cout << "\n";
         /* This was for the tab completion and history extra credit
         if (!aggieshell->redirect) {
             if (line == 0) cout << "\n";

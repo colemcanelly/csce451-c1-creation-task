@@ -50,14 +50,16 @@ public:
         running = true;
         redirect = false;
         prev_dir = "";
-        home_dir = getenv("HOME");
+        home_dir = "";
+        char* home = getenv("HOME");
+        if (home) home_dir.assign(home);
         numJobs = 0;
         sigwinch_received = 0;
         bgjobs = new std::list<Job*>{};
     }
 
     ~Shell() {
-        signal(SIGQUIT, SIG_IGN);       // Immunity from the genocide that is about to unfold
+        // signal(SIGQUIT, SIG_IGN);       // Immunity from the genocide that is about to unfold
         // kill(0, SIGQUIT);               // Genocide all my children
         for (auto it = bgjobs->begin(); it != bgjobs->end();)       // Systematically reaping my children
         {
@@ -124,7 +126,7 @@ namespace Custom {
             if (aggieshell->prev_dir != "") status = chdir((char*)aggieshell->prev_dir.c_str());
         }
         else {
-            if (args.back().front() == char('~')) args.back().replace(0, 1, aggieshell->home_dir);
+            if (args.back().front() == char('~') && aggieshell->home_dir != "") args.back().replace(0, 1, aggieshell->home_dir);
             status = chdir((char*)args.back().c_str());
         }
         aggieshell->prev_dir.assign(tmp);
