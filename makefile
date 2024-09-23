@@ -4,7 +4,7 @@ LDLIBS= # -I./include -L ./lib -l:libncurses.a -lreadline -lhistory
 
 
 SRCS=shell.cpp
-DEPS=Command.cpp Tokenizer.cpp # Custom.cpp
+DEPS=Command.cpp Tokenizer.cpp WebServer.cpp
 BINS=$(SRCS:%.cpp=%.exe)
 OBJS=$(DEPS:%.cpp=%.o)
 
