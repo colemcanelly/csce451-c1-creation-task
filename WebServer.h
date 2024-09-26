@@ -2,6 +2,7 @@
 #define WEBSERVER_H
 
 #include <netinet/in.h>
+#include <string>
 
 class WebServer {
 private:
@@ -17,6 +18,7 @@ public:
     ~WebServer();
     void acceptAndRespond();
     void respond(int connfd);
+    std::string parseUserAgentString(std::string userAgentString);
 };
 
 

@@ -3,7 +3,7 @@ CXXFLAGS=-std=c++17 -g -pedantic -Wall -Wextra -Werror -fsanitize=address,undefi
 LDLIBS= # -I./include -L ./lib -l:libncurses.a -lreadline -lhistory 
 
 
-SRCS=shell.cpp
+SRCS=shell.cpp 
 DEPS=Command.cpp Tokenizer.cpp WebServer.cpp
 BINS=$(SRCS:%.cpp=%.exe)
 OBJS=$(DEPS:%.cpp=%.o)
@@ -21,7 +21,7 @@ all: clean $(BINS)
 .PHONY: clean test
 
 clean:
-	rm -f shell a b test.txt output.txt out.trace ./test-files/cmd.txt
+	rm -f shell TestWebServer a b test.txt output.txt out.trace ./test-files/cmd.txt
 
 test: all
 	chmod u+x pa2-tests.sh

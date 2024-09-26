@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <stdio.h> 
 #include <netdb.h> 
 #include <netinet/in.h> 
@@ -7,9 +8,11 @@
 #include <sys/types.h> 
 #include <unistd.h>
 #include <string>
+#include <iostream>
+#include <sstream>
 #include "WebServer.h"
 
-#define MAX 80 
+#define MAX 1000
 #define SA struct sockaddr 
 
 WebServer::WebServer() : port(8080) {
@@ -45,6 +48,22 @@ void WebServer::setupSocket(int port) {
 	} 
 }
 
+std::string WebServer::parseUserAgentString(std::string userAgentString) {
+	std::string response;
+	
+	if (userAgentString.find("Firefox") != std::string::npos) {
+		response = "+1 for using Firefox";
+	} else if (userAgentString.find("Chrome") != std::string::npos || userAgentString.find("Chromium") != std::string::npos) {
+		response = "Chrome? In 2024? Unbelievable...";
+	} else if (userAgentString.find("Safari") != std::string::npos) {
+		response = "Safari? Are you serious? Get it together...";
+	} else if (userAgentString.find("Opera") != std::string::npos || userAgentString.find("OPR") != std::string::npos) {
+		response = "Opera is an interesting choice. At least it's not Safari...";
+	}
+	
+	return response;
+}
+
 void WebServer::acceptAndRespond() {
 	struct sockaddr_in cli;
 	socklen_t len = sizeof(cli);
@@ -61,10 +80,25 @@ void WebServer::respond(int connfd) {
 	char buff[MAX]; 
 	bzero(buff, MAX); 
 	int bytes = read(connfd, buff, sizeof(buff)); 
-	write(1, buff, bytes); // just wanna see what's in the HTTP request
+	//write(1, buff, bytes); // just wanna see what's in the HTTP request
+	std::cout << "Bytes read: " << bytes << std::endl;
+
+	std::stringstream request(buff);
+
+	std::string userAgentLine;
+	for (; std::getline(request, userAgentLine);) {
+		if (userAgentLine.find("User-Agent") != std::string::npos) {
+			std::cout << userAgentLine << std::endl;
+			break;
+		}
+	}
+
 	bzero(buff, MAX); 
+
+	std::string userAgentResponse = parseUserAgentString(userAgentLine);
 	
-	std::string htmlResponse = "<html><body><h1>Hello, world!</h1></body></html>";
+	//std::string htmlResponse = "<html><body><h1>Hello, world!</h1></body></html>";
+	std::string htmlResponse = "<h1>" + userAgentResponse + "</h1>";
 
 	std::string httpResponse = "HTTP/1.1 200 OK\r\nContent-Type: text/html;"
 	"charset=UTF-8\r\nContent-Length: " + std::to_string(htmlResponse.length()) + 
