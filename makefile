@@ -1,31 +1,58 @@
-CXX=g++
-CXXFLAGS=-std=c++17 -g -pedantic -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer
-LDLIBS= # -I./include -L ./lib -l:libncurses.a -lreadline -lhistory 
+NAME=$(shell basename $(CURDIR))
+
+BINDIR=bin
+OBJDIR=objs
+DEPDIR=deps
+
+SRCDIR=src
+INCDIR=include
+
+BIN=$(BINDIR)/$(NAME).out
+
+# Compiler settings
+CPP=g++
+DEPFLAGS=-MP -MD
+OPT=-O0
+DEBUGFLAGS=-g -pedantic -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer
+CPPFLAGS=-std=c++17 $(DEBUGFLAGS) -I$(INCDIR) $(OPT) $(DEPFLAGS)
+LDLIBS= -lreadline -lhistory 
+
+# File list generation
+SRCS=$(wildcard $(SRCDIR)/*.cpp)
+OBJS=$(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCS))
+DEPS=$(patsubst $(SRCDIR)/%.cpp,$(DEPDIR)/%.d,$(SRCS))
 
 
-SRCS=shell.cpp 
-DEPS=Command.cpp Tokenizer.cpp WebServer.cpp
-BINS=$(SRCS:%.cpp=%.exe)
-OBJS=$(DEPS:%.cpp=%.o)
+all: $(BIN)
+
+# Link the final binary
+$(BIN): $(OBJS) | $(BINDIR)
+	@ $(CPP) $(CPPFLAGS) -o $@ $^ $(LDLIBS)
+	$(info ./$@)
+
+# Compile to objects
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR) $(DEPDIR)
+	$(info $<...)
+	@ $(CPP) $(CPPFLAGS) -MF $(DEPDIR)/$*.d -c -o $@ $<
 
 
-all: clean $(BINS)
+# Create dirs if they don't exist
+$(OBJDIR): ; @mkdir -p $(OBJDIR)
+$(BINDIR): ; @mkdir -p $(BINDIR)
+$(DEPDIR): ; @mkdir -p $(DEPDIR)
 
-%.o: %.cpp %.h
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
-%.exe: %.cpp $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(patsubst %.exe,%,$@) $^ $(LDLIBS)
-
+# include the dependencies
+-include $(DEPFILES)
 
 .PHONY: clean test
 
 clean:
-	rm -f shell TestWebServer a b test.txt output.txt out.trace ./test-files/cmd.txt
+	rm -f $(OBJDIR)/*.o $(DEPDIR)/*.d $(BINDIR)/*.out TestWebServer
+	rm -f shell a b test.txt output.txt out.trace ./test-files/cmd.txt 
 
 test: all
 	chmod u+x pa2-tests.sh
-	./pa2-tests.sh $(filter-out $@,$(MAKECMDGOALS))
+	./pa2-tests.sh $(BIN) $(filter-out $@,$(MAKECMDGOALS))
 
 %:		# Do nothing if an arg is not a `Make Goal`
 	@:

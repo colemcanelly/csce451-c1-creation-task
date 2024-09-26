@@ -6,16 +6,8 @@
 #include <unistd.h>     // pipe, fork, dup2, execvp, close
 #include <fcntl.h>
 
-// #include <readline/readline.h>  // rl_*()
-// #include <readline/history.h>   // add_history()
-
-/* This was for the tab completion and history extra credit
-    It does not compile on the remote GitHub tester >:/
-#include "ncurses/ncurses.h"
-#define READLINE_LIBRARY true
-#include "readline/readline.h"
-#include "readline/history.h"   // add_history()
-*/
+#include <readline/readline.h>  // rl_*()
+#include <readline/history.h>   // add_history()
 
 #include "Shell.h"     // struct `Job`, namespace `Custom`, class `Shell`
 
@@ -23,13 +15,6 @@ using namespace std;
 
 Shell* const aggieshell = new Shell{};
 
-/* Handle SIGWINCH and window size changes when readline is not active and
-    reading a character. */
-/*
-static void sighandler (int) {
-    aggieshell->sigwinch_received = true;
-}
-*/
 
 void exec_cmd ( Command* command, const int* fds, const bool isLast )
 {
@@ -188,60 +173,31 @@ void shell_redirected ()
     } while (aggieshell->running && status);
 }
 
-/* This was for the tab completion and history extra credit
+// This was for the tab completion and history extra credit
 // Fancy features like `tab` autocompletion and arrow-key history for a better user experience
 void shell_default () 
 {
-    fd_set fds;
-    int r;
-
-    setlocale(LC_ALL, "");              // Set default locale values based on user preference ("")
-    signal(SIGWINCH, sighandler);       // Install handler for SIGWINCH
-    rl_callback_handler_install(aggieshell->prompt(), handle_input);  // Install the line handler.
-
-    // Enter a simple event loop.   This waits until something is available
-    //  to read on readline's input stream (defaults to standard input) and
-    //  calls the builtin character read callback to read it.    It does not
-    //  have to modify the user's terminal settings. 
-    while (aggieshell->running)
-    {
-        FD_ZERO(&fds);
-        FD_SET(fileno(rl_instream), &fds);              
-
-        r = select(FD_SETSIZE, &fds, NULL, NULL, NULL);
-        if (r < 0 && errno != EINTR) {
-            perror("rltest: select");
-            rl_callback_handler_remove();
-            break;
-        }
-        if (aggieshell->sigwinch_received) {
-            rl_resize_terminal();
-            aggieshell->sigwinch_received = 0;
-        }
-        if (r < 0) continue;            
-
-        if (FD_ISSET(fileno(rl_instream), &fds)) rl_callback_read_char();
-    }
+    char* input;
+    
+    do {
+        input = readline(aggieshell->prompt());
+        if (!input) break;
+        add_history(input);
+        handle_input(input);
+        free(input);
+    } while (aggieshell->running);
 }
-*/
+
 
 int main ()
 {
     struct winsize in_w;
     ioctl(STDIN_FILENO, TIOCGWINSZ, &in_w);         // Get the dimensions of stdin
     aggieshell->redirect = (in_w.ws_col == 0);      // Test if input (stdin) has been redirected
-    shell_redirected();
-    /*
-    switch (aggieshell->redirect)                   // We don't need fancy features if input is redirected
-    {
-        case false:
-            shell_default();
-            break;
-        case true:
-            shell_redirected();
-            break;
-    }
-    */
+
+    if (aggieshell->redirect) shell_redirected();
+    else shell_default();
+
     delete aggieshell;
     return 0;
 }

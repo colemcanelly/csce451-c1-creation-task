@@ -7,6 +7,7 @@ remake () {
     make -s >/dev/null 2>&1
 }
 
+SHELL=$1
 
 printf "To remove colour from tests, set COLOUR to 1 in sh file\n\n"
 COLOUR=0
@@ -45,7 +46,7 @@ test_echo() {
     printf "\n\t\tTesting :: echo \"Hello world | Life is Good > Great $\"\r"
     cat ./test-files/test_echo_double.txt ./test-files/test_exit.txt > ./test-files/cmd.txt
     RES=$(. ./test-files/test_echo_double.txt)
-    if ./shell < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
+    if $SHELL < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
         printf "    ${GREEN}Passed${NC}\n"
         SCORE=$(($SCORE+$PTS))
         all_failed=false
@@ -62,7 +63,7 @@ test_ls_default() {
     printf "\n\t\tTesting :: ls\r"
     cat ./test-files/test_ls.txt ./test-files/test_exit.txt > ./test-files/cmd.txt
     RES=$(. ./test-files/test_ls.txt)
-    if ./shell < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
+    if $SHELL < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
         printf "    ${GREEN}Passed${NC}\n"
         SCORE=$(($SCORE+$PTS))
         all_failed=false
@@ -79,7 +80,7 @@ test_ls_l_usr() {
     printf "\n\t\tTesting :: ls -l /usr/bin\r"
     cat ./test-files/test_ls_l_usr_bin.txt ./test-files/test_exit.txt > ./test-files/cmd.txt
     RES=$(. ./test-files/test_ls_l_usr_bin.txt)
-    if ./shell < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
+    if $SHELL < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
         printf "    ${GREEN}Passed${NC}\n"
         SCORE=$(($SCORE+$PTS))
         all_failed=false
@@ -96,7 +97,7 @@ test_ls_al() {
     printf "\n\t\tTesting :: ls -l -a\r"
     cat ./test-files/test_ls_l_a.txt ./test-files/test_exit.txt > ./test-files/cmd.txt
     RES=$(. ./test-files/test_ls_l_a.txt)
-    if ./shell < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
+    if $SHELL < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
         printf "    ${GREEN}Passed${NC}\n"
         SCORE=$(($SCORE+$PTS))
         all_failed=false
@@ -113,7 +114,7 @@ test_ps() {
     printf "\n\t\tTesting :: ps aux\r"
     cat ./test-files/test_ps_aux.txt ./test-files/test_exit.txt > ./test-files/cmd.txt
     RES=$(. ./test-files/test_ps_aux.txt)
-    if ./shell < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
+    if $SHELL < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
         printf "    ${GREEN}Passed${NC}\n"
         SCORE=$(($SCORE+$PTS))
         all_failed=false
@@ -131,7 +132,7 @@ test_io_redirect() {
     cat ./test-files/test_input_output_redirection.txt ./test-files/test_exit.txt > ./test-files/cmd.txt
     RES=$(. ./test-files/test_input_output_redirection.txt)
     rm -f a b
-    ./shell < ./test-files/cmd.txt >temp 2>/dev/null
+    $SHELL < ./test-files/cmd.txt >temp 2>/dev/null
     if grep -qF -- "${RES}" temp; then
         if [ -f a ] && [ -f b ] && grep -qF -- "${RES}" b; then
             printf "    ${GREEN}Passed${NC}\n"
@@ -154,7 +155,7 @@ test_pipe_single() {
     cat ./test-files/test_single_pipe.txt ./test-files/test_exit.txt > ./test-files/cmd.txt
     RES=$(. ./test-files/test_single_pipe.txt)
     NOTRES=$(ls -l | grep "Tokenizer.cpp")
-    strace -e trace=execve -f -o out.trace ./shell < ./test-files/cmd.txt >temp 2>/dev/null
+    strace -e trace=execve -f -o out.trace $SHELL < ./test-files/cmd.txt >temp 2>/dev/null
     LS=$(which ls)
     GREP=$(which grep)
     if grep -q "execve(\"${LS}\"" out.trace && grep -q "execve(\"${GREP}\"" out.trace && grep -qFw -- "${RES}" temp && ! grep -qFw -- "${NOTRES}" temp; then
@@ -178,7 +179,7 @@ test_pipes() {
     ARR=($RES)
     echo "${RES}" >cnt.txt
     CNT=$(grep -oF -- "${ARR[0]}" cnt.txt | wc -l)
-    strace -e trace=execve -f -o out.trace ./shell < ./test-files/cmd.txt >temp 2>/dev/null
+    strace -e trace=execve -f -o out.trace $SHELL < ./test-files/cmd.txt >temp 2>/dev/null
     PS=$(which ps)
     AWK=$(which awk)
     SORT=$(which sort)
@@ -203,7 +204,7 @@ test_pipes_io() {
     echo "${RES}" >cnt.txt
     CNT=$(grep -oF -- "${RES}" cnt.txt | wc -l)
     rm -f cnt.txt test.txt output.txt
-    if [ $(./shell < ./test-files/cmd.txt 2>/dev/null | grep -oF -- "${RES}" | wc -l) -eq ${CNT} ] && [ -f test.txt ] && [ -f output.txt ]; then 
+    if [ $($SHELL < ./test-files/cmd.txt 2>/dev/null | grep -oF -- "${RES}" | wc -l) -eq ${CNT} ] && [ -f test.txt ] && [ -f output.txt ]; then 
         printf "    ${GREEN}Passed${NC}\n"
         SCORE=$(($SCORE+$PTS))
         all_failed=false
@@ -220,7 +221,7 @@ test_cdA() {
     printf "\n\t\tTesting :: cd ../../\r"
     cat ./test-files/test_cd_A.txt ./test-files/test_exit.txt > ./test-files/cmd.txt
     DIR=$(. ./test-files/test_cd_A.txt)
-    ./shell < ./test-files/cmd.txt >temp 2>/dev/null
+    $SHELL < ./test-files/cmd.txt >temp 2>/dev/null
     if [ $(grep -oF -- "${DIR}" temp | wc -l) -ge 3 ] && [ $(grep -oF -- "${DIR}/" temp | wc -l) -le 1 ]; then
         printf "    ${GREEN}Passed${NC}\n"
         SCORE=$(($SCORE+$PTS))
@@ -240,7 +241,7 @@ test_cdB() {
     cat ./test-files/test_cd_B.txt ./test-files/test_exit.txt > ./test-files/cmd.txt
     TEMPDIR=$(cd /home && pwd)
     DIR=$(. ./test-files/test_cd_B.txt | head -n 1)
-    ./shell < ./test-files/cmd.txt >temp 2>/dev/null
+    $SHELL < ./test-files/cmd.txt >temp 2>/dev/null
     if [ $(grep -oF -- "${DIR}" temp | wc -l) -ge 3 ] && ( [ $(grep -oF -- "${TEMPDIR}" temp | wc -l) -le 1 ] || ( grep -qF -- "${TEMPDIR}/" <<< "$DIR" && [ $(grep -oF -- "${TEMPDIR}" temp | wc -l) -gt $(grep -oF -- "${DIR}" temp | wc -l) ] ) ); then
         printf "    ${GREEN}Passed${NC}\n"
         SCORE=$(($SCORE+$PTS))
@@ -261,7 +262,7 @@ test_se_single() {
     RES1=$(ps|grep bash|head -1|awk '{print $1}')
     RES=$(cat /proc/${RES1}/status)
     echo "${RES}" >cnt.txt
-    if ./shell < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
+    if $SHELL < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
         printf "    ${GREEN}Passed${NC}\n"
         SCORE=$(($SCORE+$PTS))
         all_failed=false
@@ -281,7 +282,7 @@ test_se_multiple() {
     RES1=$(ps|grep bash|head -1|awk '{print $1}')
     RES=$(cat /proc/${RES1}/status)
     echo "${RES}" >cnt.txt
-    if ./shell < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
+    if $SHELL < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
         printf "    ${GREEN}Passed${NC}\n"
         SCORE=$(($SCORE+$PTS))
         all_failed=false
@@ -301,7 +302,7 @@ test_se_nested() {
     RES1=$(ps|grep bash|head -1|awk '{print $1}')
     RES=$(cat /proc/${RES1}/status)
     echo "${RES}" >cnt.txt
-    if ./shell < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
+    if $SHELL < ./test-files/cmd.txt 2>/dev/null | grep -qF -- "${RES}"; then
         printf "    ${GREEN}Passed${NC}\n"
         SCORE=$(($SCORE+$PTS))
         all_failed=false
@@ -356,11 +357,12 @@ test_all() {
     test_se                 # Group Test
 }
 
-if [ $# -eq 0 ]; then
+if [ $# -eq 1 ]; then
     test_all
 else
-    for arg in $@
+    for arg in ${@:2}
     do
+        echo $arg
         test_$arg
     done
 fi

@@ -12,12 +12,12 @@
 #include "Tokenizer.h"
 
 // all the basic colours for a shell prompt
-#define RED     "\033[1;31m"
-#define GREEN	"\033[1;32m"
-#define YELLOW  "\033[1;33m"
-#define BLUE	"\033[1;34m"
-#define WHITE	"\033[1;37m"
-#define NC      "\033[0m"
+#define RED     "\001\033[1;31m\002"
+#define GREEN	"\001\033[1;32m\002"
+#define YELLOW  "\001\033[1;33m\002"
+#define BLUE	"\001\033[1;34m\002"
+#define WHITE	"\001\033[1;37m\002"
+#define NC      "\001\033[0m\002"
 
 enum FD {READ, WRITE};    // read and write ends of a pipe
 
