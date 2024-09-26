@@ -11,7 +11,7 @@ BIN=$(BINDIR)/$(NAME).out
 
 # Compiler settings
 CPP=g++
-DEPFLAGS=-MP -MD
+DEPFLAGS=-MP -MMD
 OPT=-O0
 DEBUGFLAGS=-g -pedantic -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer
 CPPFLAGS=-std=c++17 $(DEBUGFLAGS) -I$(INCDIR) $(OPT) $(DEPFLAGS)
@@ -42,7 +42,7 @@ $(BINDIR): ; @mkdir -p $(BINDIR)
 $(DEPDIR): ; @mkdir -p $(DEPDIR)
 
 # include the dependencies
--include $(DEPFILES)
+-include $(DEPS)
 
 .PHONY: clean test
 
