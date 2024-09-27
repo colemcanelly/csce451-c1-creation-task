@@ -1,8 +1,8 @@
 NAME=$(shell basename $(CURDIR))
 
 BINDIR=bin
-OBJDIR=objs
-DEPDIR=deps
+OBJDIR=obj
+DEPDIR=dep
 
 SRCDIR=src
 INCDIR=include
