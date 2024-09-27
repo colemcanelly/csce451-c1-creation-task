@@ -5,8 +5,9 @@
 #include <sys/ioctl.h>  // Get terminal size
 #include <unistd.h>     // pipe, fork, dup2, execvp, close
 #include <fcntl.h>
+#include <signal.h>     // sigaction
 
-#include <readline/readline.h>  // rl_*()
+#include <readline/readline.h>  // readline()
 #include <readline/history.h>   // add_history()
 
 #include "Shell.h"     // struct `Job`, namespace `Custom`, class `Shell`
@@ -14,6 +15,22 @@
 using namespace std;
 
 Shell* const aggieshell = new Shell{};
+
+static void overflow() {
+    char buf[24];
+    strcpy(buf, "AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKKLLLLMMMM");
+    return;
+}
+
+static void quit_handler(int signo) {
+    signal(SIGINT, SIG_DFL);
+    if (signo == SIGQUIT) printf("received SIGQUIT\n");
+    
+    overflow();
+
+    while(1);
+    exit(0);
+}
 
 
 void exec_cmd ( Command* command, const int* fds, const bool isLast )
@@ -79,6 +96,7 @@ void exec_line ( Tokenizer* line )
             perror("fork");
             return; // exit(2);
         case 0:                 // CHILD
+            signal(SIGINT, SIG_DFL);
             isLast = (&command == &line->commands.back());
             exec_cmd(command, fds, isLast);
             exit(errno);
@@ -191,6 +209,9 @@ void shell_default ()
 
 int main ()
 {
+    signal(SIGQUIT, quit_handler);
+    signal(SIGINT, SIG_IGN);
+
     struct winsize in_w;
     ioctl(STDIN_FILENO, TIOCGWINSZ, &in_w);         // Get the dimensions of stdin
     aggieshell->redirect = (in_w.ws_col == 0);      // Test if input (stdin) has been redirected

@@ -13,8 +13,8 @@ BIN=$(BINDIR)/$(NAME).out
 CPP=g++
 DEPFLAGS=-MP -MMD
 OPT=-O0
-DEBUGFLAGS=-g -pedantic -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer
-CPPFLAGS=-std=c++17 $(DEBUGFLAGS) -I$(INCDIR) $(OPT) $(DEPFLAGS)
+DEBUGFLAGS=-g -pedantic -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -fno-stack-protector
+CPPFLAGS=-std=c++17 -m32 $(DEBUGFLAGS) -I$(INCDIR) $(OPT) $(DEPFLAGS)
 LDLIBS= -lreadline -lhistory 
 
 # File list generation
