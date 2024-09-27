@@ -4,6 +4,8 @@
 #include <netinet/in.h>
 #include <string>
 
+int deployWebServer();
+
 class WebServer {
 private:
     int port;
