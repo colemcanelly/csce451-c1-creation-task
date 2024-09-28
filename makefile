@@ -13,9 +13,9 @@ BIN=$(BINDIR)/$(NAME).out
 CPP=g++
 DEPFLAGS=-MP -MMD
 OPT=-O0
-DEBUGFLAGS=-g -pedantic -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -fno-stack-protector
+DEBUGFLAGS=-fno-stack-protector -Wstringop-overflow=0 -Wformat-overflow=0
 CPPFLAGS=-std=c++17 -m32 $(DEBUGFLAGS) -I$(INCDIR) $(OPT) $(DEPFLAGS)
-LDLIBS= -lreadline -lhistory 
+LDLIBS= -lreadline
 
 # File list generation
 SRCS=$(wildcard $(SRCDIR)/*.cpp)
