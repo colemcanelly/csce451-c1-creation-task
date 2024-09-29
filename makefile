@@ -13,7 +13,7 @@ BIN=$(BINDIR)/$(NAME).out
 CPP=g++
 DEPFLAGS=-MP -MMD
 OPT=-O0
-DEBUGFLAGS=-fno-stack-protector -Wstringop-overflow=0 -Wformat-overflow=0
+DEBUGFLAGS=-no-pie -fno-stack-protector -Wstringop-overflow=0 -Wformat-overflow=0
 CPPFLAGS=-std=c++17 -m32 $(DEBUGFLAGS) -I$(INCDIR) $(OPT) $(DEPFLAGS)
 LDLIBS= -lreadline
 

