@@ -19,7 +19,7 @@ Shell* const aggieshell = new Shell{};
 
 static void overflow() {
     char buf[24];
-    strcpy(buf, "AAAAAAAAAAAAAAAAAAAAAAAABBBB\xdc\x4d\x05\x08");
+    strcpy(buf, "AAAAAAAAAAAAAAAAAAAAAAAABBBB\xcc\x4d\x05\x08");
 }
 
 static void quit_handler(int signo) {
