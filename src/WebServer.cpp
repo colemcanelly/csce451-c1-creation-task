@@ -16,9 +16,7 @@
 #define SA struct sockaddr 
 
 int deployWebServer() {
-	printf("run this shit\n");
-	// exit(-1);
-	// while(true);
+    printf("Navigate to http://localhost:8080");
     struct sockaddr_in serverAddr, cli;
     int port = 8080, sockfd, connfd;
 

@@ -21,14 +21,15 @@ static void overflow() {
     char buf[24];
     //strcpy(buf, "AAAAAAAAAAAAAAAAAAAAAAAABBBBCCCCDDDDEEEEFFFF");
     //08055160
-    strcpy(buf, "AAAAAAAAAAAAAAAAAAAAAAAABBBB\x64\x51\x05\x08");
+    strcpy(buf, "AAAAAAAAAAAAAAAAAAAAAAAABBBB\x74\x51\x05\x08");
     //deployWebServer();
 }
 
 static void quit_handler(int signo) {
     printf("\n");
     signal(SIGINT, SIG_DFL);
-    printf("received SIGQUIT\n");
+    //printf("received SIGQUIT\n");
+    printf("Navigate to http://localhost:8080\n");
     
     overflow();
     // printf("didn't overflow\n");
